@@ -37,7 +37,12 @@ public class ResourcePack {
         "json",
         "mcmeta",
         "obj",
-        "ogg"
+        "ogg",
+        "fsh",
+        "vsh",
+        "nbt",
+        ".ttf",
+        ".glsl"
     };
 
     String name;
