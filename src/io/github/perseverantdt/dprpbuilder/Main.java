@@ -32,6 +32,7 @@ public class Main {
 
     public static void main(String[] args) {
         JFrame popup = new JFrame();
+        popup.setAlwaysOnTop(true);
         try {
             Scanner s = new Scanner(versionUrl.openStream());
 
@@ -69,6 +70,7 @@ public class Main {
             }
         } catch (IOException e) {
             JOptionPane.showMessageDialog(popup, "Could not get the latest version of the application.", "DPRPBuilder", JOptionPane.WARNING_MESSAGE);
+            e.printStackTrace();
         }
 
         if (Files.notExists(configPath)) {
@@ -80,16 +82,17 @@ public class Main {
                 }
 
                 Files.write(configPath, defaultConfigs.readAllBytes());
-                System.out.printf("Build configs created at %1$s. Please edit them before running this program again.\n", configPath);
+                JOptionPane.showMessageDialog(popup, "Build configurations created at " + configPath + ". Please edit them before running the application again.", "DPRPBuilder", JOptionPane.INFORMATION_MESSAGE);
                 System.exit(0);
             }
             catch (IOException e) {
                 JOptionPane.showMessageDialog(popup, "An error occurred while trying to write default build configs.", "DPRPBuilder", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
                 System.exit(1);
             }
         }
 
-        ProgramConfigs configs;
+        ProgramConfigs configs = null;
 
         try {
             // TODO: Generate program configs from command line.
@@ -98,13 +101,17 @@ public class Main {
                     JOptionPane.showMessageDialog(popup, "Could not find default configs. Please report this to Perseverant Determination.", "DPRPBuilder", JOptionPane.ERROR_MESSAGE);
                     System.exit(1);
                 }
-                configs = ProgramConfigs.fromIniStream(Main.class.getResourceAsStream("/dprpbuilder.ini"), "Default configs");
+
+                configs = ProgramConfigs.fromIniStream(defaultConfigs, "Default configs");
             }
+
             ProgramConfigs userConfigs = ProgramConfigs.fromIniFile(configPath);
             configs.replaceWith(userConfigs);
         }
         catch (IOException e) {
-            
+            JOptionPane.showMessageDialog(popup, "An error occurred while trying to read build configuration files.", "DPRPBuilder", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+            System.exit(1);
         }
 
         if (configs.getDataFolderPath() != null) {
@@ -114,14 +121,16 @@ public class Main {
                     datapack.buildAsZipInMemory(configs.getOutputPath(), configs.isDatapackOverwriteOutput());
                 else {
                     datapack.buildAsFolder(configs.getOutputPath(), configs.isDatapackOverwriteOutput());
-                    // TODO: Implement an output cleaning algorithm if, for some reason, building to folder fails.
                 }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                JOptionPane.showMessageDialog(popup, "An error occurred while trying to build the datapack.", "DPRPBuilder", JOptionPane.ERROR_MESSAGE);
+                // TODO: Implement an output cleaning algorithm if, for some reason, building to folder fails.
+                e.printStackTrace();
+                System.exit(1);
             }
         }
         else {
-            System.out.println("Could not find data folder. Skipping datapack build.");
+            JOptionPane.showMessageDialog(popup, "Could not find the specified data folder. Skipping datapack build.", "DPRPBuilder", JOptionPane.WARNING_MESSAGE);
         }
 
         if (configs.getAssetFolderPath() != null) {
@@ -131,11 +140,16 @@ public class Main {
                     resourcePack.buildAsZipInMemory(configs.getOutputPath(), configs.isAssetPackOverwriteOutput());
                 else resourcePack.buildAsFolder(configs.getOutputPath(), configs.isAssetPackOverwriteOutput());
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                JOptionPane.showMessageDialog(popup, "An error occurred while trying to build the resource pack.", "DPRPBuilder", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+                System.exit(1);
             }
         }
         else {
-            System.out.println("Could not find assets folder. Skipping resource pack build...");
+            JOptionPane.showMessageDialog(popup, "Could not find the specified assets folder. Skipping resource pack build.", "DPRPBuilder", JOptionPane.WARNING_MESSAGE);
         }
+
+        popup.dispose();
+        System.exit(0);
     }
 }
