@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Datapack Builder:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Datapack_Builder_jar</output-path>
+    <root id="archive" name="DPRPBuilder.jar">
+      <element id="module-output" name="Datapack Builder" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/commons-io/commons-io/2.11.0/commons-io-2.11.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/annotations/23.0.0/annotations-23.0.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.9.1/gson-2.9.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/github/ushiosan23/simple_ini/0.1.1/simple_ini-0.1.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/github/ushiosan23/jvm_utilities/0.1.22/jvm_utilities-0.1.22.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/github/zafarkhaja/java-semver/0.9.0/java-semver-0.9.0.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
