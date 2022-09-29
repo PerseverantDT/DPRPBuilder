@@ -5,21 +5,78 @@ import io.github.perseverantdt.dprpbuilder.core.Datapack;
 import io.github.perseverantdt.dprpbuilder.core.ResourcePack;
 import io.github.perseverantdt.dprpbuilder.util.ProgramConfigs;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Scanner;
 
 public class Main {
     static final Path configPath = Path.of("./dprpbuilder.ini");
     static final Version programVersion = Version.valueOf("0.1.0");
+    static final URL versionUrl;
+    static final URL releaseUrl;
+    static {
+        try {
+            versionUrl = new URL("https://raw.githubusercontent.com/PerseverantDT/DPRPBuilder/main/VERSION.txt");
+            releaseUrl = new URL("https://github.com/PerseverantDT/DPRPBuilder/releases");
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public static void main(String[] args) {
+        JFrame popup = new JFrame();
+        try {
+            Scanner s = new Scanner(versionUrl.openStream());
+
+            String latestVersionText = s.nextLine();
+            Version latestVersion = Version.valueOf(latestVersionText);
+
+            if (latestVersion.greaterThan(programVersion)) {
+                int update = JOptionPane.showConfirmDialog(popup, "New version detected. Go to latest release for update?", "DPRPBuilder", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+
+                if (update == JOptionPane.YES_OPTION) {
+                    if (Desktop.isDesktopSupported()) {
+                        Desktop desktop = Desktop.getDesktop();
+                        try {
+                            desktop.browse(releaseUrl.toURI());
+                        } catch (IOException | URISyntaxException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    else {
+                        String os = System.getProperty("os.name").toLowerCase();
+                        Runtime runtime = Runtime.getRuntime();
+
+                        if (os.contains("win")) {
+                            runtime.exec("rundll32 url.dll,FileProtocolHandler " + releaseUrl.toString());
+                        }
+                        else if (os.contains("mac")) {
+                            runtime.exec("open " + releaseUrl.toString());
+                        }
+                        else if (os.contains("nix") || os.contains("nux")) {
+                            runtime.exec("xdg-open " + releaseUrl.toString());
+                        }
+                    }
+                    System.exit(0);
+                }
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(popup, "Could not get the latest version of the application.", "DPRPBuilder", JOptionPane.WARNING_MESSAGE);
+        }
+
         if (Files.notExists(configPath)) {
             System.out.println("No build configs found. Creating build configs...");
             try (InputStream defaultConfigs = Main.class.getResourceAsStream("/dprpbuilder.ini")) {
                 if (defaultConfigs == null) {
-                    throw new RuntimeException("Could not find default configs. Please report this to Perseverant Determination");
+                    JOptionPane.showMessageDialog(popup, "Could not find default configs. Please report this to Perseverant Determination.", "DPRPBuilder", JOptionPane.ERROR_MESSAGE);
+                    System.exit(1);
                 }
 
                 Files.write(configPath, defaultConfigs.readAllBytes());
@@ -27,7 +84,8 @@ public class Main {
                 System.exit(0);
             }
             catch (IOException e) {
-                throw new RuntimeException(e);
+                JOptionPane.showMessageDialog(popup, "An error occurred while trying to write default build configs.", "DPRPBuilder", JOptionPane.ERROR_MESSAGE);
+                System.exit(1);
             }
         }
 
@@ -35,12 +93,18 @@ public class Main {
 
         try {
             // TODO: Generate program configs from command line.
-            configs = ProgramConfigs.fromIniStream(Main.class.getResourceAsStream("/dprpbuilder.ini"), "Default configs");
+            try (InputStream defaultConfigs = Main.class.getResourceAsStream("/dprpbuilder.ini")) {
+                if (defaultConfigs == null) {
+                    JOptionPane.showMessageDialog(popup, "Could not find default configs. Please report this to Perseverant Determination.", "DPRPBuilder", JOptionPane.ERROR_MESSAGE);
+                    System.exit(1);
+                }
+                configs = ProgramConfigs.fromIniStream(Main.class.getResourceAsStream("/dprpbuilder.ini"), "Default configs");
+            }
             ProgramConfigs userConfigs = ProgramConfigs.fromIniFile(configPath);
             configs.replaceWith(userConfigs);
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            
         }
 
         if (configs.getDataFolderPath() != null) {
